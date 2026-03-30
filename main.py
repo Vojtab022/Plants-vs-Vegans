@@ -15,8 +15,12 @@ clock = pygame.time.Clock()
 
 # --- 1. HERNÍ DATA ---
 seznam_veganu = []
-prvni_vegan = ZakladniVegan(config.WAYPOINTY)
-seznam_veganu.append(prvni_vegan)
+seznam_veganu = [] # Tento řádek necháš
+# --- NOVÉ: SYSTÉM PRO VLNY NEPŘÁTEL ---
+cas_posledniho_spawnu = pygame.time.get_ticks()
+SPAWN_INTERVAL = 2500 # Každých 2.5 vteřiny (2500 ms) přijde nový vegan
+celkem_vygenerovano = 0
+MAX_VEGANU_VE_VLNE = 10 # Vlna skončí po 10 veganech
 
 seznam_kytek = []
 seznam_strel = [] # !!! NOVÉ !!! Seznam střel
@@ -69,6 +73,18 @@ while running:
 
 
     # B) Aktualizace a Logika (!!! Zásadní změny !!!)
+
+    nyni = pygame.time.get_ticks()
+    
+    # --- NOVÉ: Spawnování veganů ---
+    # Pokud uběhl dostatek času a ještě jsme nevyčerpali limit vlny
+    if nyni - cas_posledniho_spawnu > SPAWN_INTERVAL and celkem_vygenerovano < MAX_VEGANU_VE_VLNE:
+        novy_vegan = ZakladniVegan(config.WAYPOINTY)
+        seznam_veganu.append(novy_vegan)
+        
+        cas_posledniho_spawnu = nyni
+        celkem_vygenerovano += 1
+        print(f"Pozor! Na mapu vstoupil vegan číslo {celkem_vygenerovano}!")
     
     # 1. Aktualizace kytky (střílení a generování peněz)
     for kytka in seznam_kytek:

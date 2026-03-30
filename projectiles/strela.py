@@ -3,26 +3,49 @@ import config
 
 class Strela:
     def __init__(self, start_x, start_y, cilový_vegan):
+        # Pozice střely
         self.pozice = pygame.math.Vector2(start_x, start_y)
-        self.cil = cilový_vegan # Strela si pamatuje, na kterého vegana byla vystřelena
+        
+        # !!! DŮLEŽITÉ: Uložíme si REFERENCI na konkrétního vegana
+        # Střela ho bude sledovat celou dobu
+        self.cil = cilový_vegan
+        
         self.data = config.STRELA_HRY_DATA
+        self.rychlost = self.data["rychlost"] # Načteme rychlost z configu
         
-        self.je_ziva = True # Pro snadné mazání střel, které trefily
-        
-        # Vypočítáme konstantní směr k cíli v momentě výstřelu
-        # (Aby střela "nezahejbala", když se vegan pohne)
-        smer_k_cili = (self.cil.pozice - self.pozice).normalize()
-        self.vektor_pohybu = smer_k_cili * self.data["rychlost"]
+        self.je_ziva = True # Pro mazání
 
     def update(self):
-        # Střela letí rovně podle vektoru pohybu
-        self.pozice += self.vektor_pohybu
+        # --- NOVÉ: ŘÍZENÝ POHYB (HOMING) ---
         
-        # Kontrola, jestli střela nevyletěla z obrazovky
+        # 1. Zkontrolujeme, zda cíl stále existuje a je naživu (HP > 0)
+        # (Používáme self.cil.hp, protože jsme ve veganovi přejmenovali zdravi na hp)
+        if self.cil and self.cil.hp > 0:
+            
+            # 2. Vypočítáme vektor k *aktuální* pozici cíle (každý frame!)
+            smer_k_cili = (self.cil.pozice - self.pozice)
+            vzdalenost = smer_k_cili.length()
+            
+            # 3. Pokud jsme už skoro u cíle, prostě se na něj "teleportujeme",
+            # aby kolizní systém v main.py garantovaně detekoval zásah.
+            if vzdalenost < self.rychlost:
+                self.pozice = self.cil.pozice
+            else:
+                # 4. Jinak normalizujeme směr a posuneme se
+                smer_normalizovany = smer_k_cili.normalize()
+                self.pozice += smer_normalizovany * self.rychlost
+                
+        else:
+            # Co když cíl umřel dřív, než střela doletěla?
+            # V Tower Defense je běžné, že střela prostě letí dál rovně
+            # nebo zmizí. Pro jednoduchost ji necháme zmizet.
+            self.je_ziva = False
+
+        # --- KONTROLA HRANIC (ponecháme původní) ---
         if (self.pozice.x < 0 or self.pozice.x > config.SIRKA_OKNA or
             self.pozice.y < 0 or self.pozice.y > config.VYSKA_MAPY):
             self.je_ziva = False
 
     def draw(self, screen):
-        # Kreslíme střelu jako kuličku
+        # (Draw ponecháme beze změny)
         pygame.draw.circle(screen, self.data["barva"], (int(self.pozice.x), int(self.pozice.y)), self.data["velikost"])
