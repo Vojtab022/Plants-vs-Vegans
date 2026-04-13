@@ -31,9 +31,10 @@ class Strela:
             if vzdalenost < self.rychlost:
                 self.pozice = self.cil.pozice
             else:
-                # 4. Jinak normalizujeme směr a posuneme se
-                smer_normalizovany = smer_k_cili.normalize()
-                self.pozice += smer_normalizovany * self.rychlost
+                # 4. Jinak normalizujeme směr a posuneme se (bezpečnostní pojistka)
+                if vzdalenost > 0:
+                    smer_normalizovany = smer_k_cili.normalize()
+                    self.pozice += smer_normalizovany * self.rychlost
                 
         else:
             # Co když cíl umřel dřív, než střela doletěla?
