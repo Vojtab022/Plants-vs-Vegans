@@ -9,6 +9,8 @@ from plants.hrachostrel import Hrachostrel
 from plants.slunecnice import Slunecnice
 
 def start_game():
+    # Snížíme velikost audio bufferu i pro samotnou hru
+    pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.init()
     screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA))
     pygame.display.set_caption("Plants vs Vegans")

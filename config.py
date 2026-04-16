@@ -1,7 +1,7 @@
 # --- NASTAVENÍ OBRAZOVKY A UI ---
 VELIKOST_POLICKA = 60
 FPS = 60
-CURSOR_SKIN = "Arrow" # Může být "Arrow" nebo "Crosshair"
+CURSOR_SKIN = "Zlatý kurzor" # Může být "Zlatý kurzor" nebo "Zelený kurzor"
 
 # Mapa zůstává stejná
 MAPA_LEVEL_1 = [
