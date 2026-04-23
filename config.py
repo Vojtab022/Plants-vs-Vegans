@@ -3,6 +3,10 @@ VELIKOST_POLICKA = 60
 FPS = 60
 CURSOR_SKIN = "Zlatý kurzor" # Může být "Zlatý kurzor" nebo "Zelený kurzor"
 
+# --- HLASITOST (0.0 až 1.0) ---
+HLASITOST_HUDBY = 0.3
+HLASITOST_EFEKTU = 0.5
+
 # Mapa zůstává stejná
 MAPA_LEVEL_1 = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0],
@@ -34,73 +38,35 @@ MAPA_LEVEL_2 = [
 SLOUPCU = len(MAPA_LEVEL_1[0])
 RADKU = len(MAPA_LEVEL_1)
 SIRKA_OKNA = SLOUPCU * VELIKOST_POLICKA
-VYSKA_MAPY = RADKU * VELIKOST_POLICKA # Původní VYSKA_OKNA
+VYSKA_MAPY = RADKU * VELIKOST_POLICKA
 
 # Definice UI baru
-VYSKA_UI = 100 # Jak vysoký bude bar na kytky dole
-VYSKA_OKNA = VYSKA_MAPY + VYSKA_UI # Celková výška okna
+VYSKA_UI = 100
+VYSKA_OKNA = VYSKA_MAPY + VYSKA_UI
 
 # --- BARVY ---
 BARVA_TRAVY = (34, 139, 34)
 BARVA_CESTY = (139, 69, 19)
 BARVA_MRIZKY = (0, 0, 0)
-# Přidáme barvy pro UI
-BARVA_UI_POZADI = (100, 100, 100) # Šedá
-BARVA_UI_VYBER = (255, 215, 0)   # Zlatá pro vybranou kytku
+BARVA_UI_POZADI = (100, 100, 100)
+BARVA_UI_VYBER = (255, 215, 0)
 
-WAYPOINTY = [
-    (30, 90),   # Start (vlevo)
-    (150, 90),  # První zatáčka (dolů)
-    (150, 510), # Druhá zatáčka (doprava)
-    (390, 510), # Třetí zatáčka (nahoru)
-    (390, 150), # Čtvrtá zatáčka (doprava)
-    (510, 150), # Pátá zatáčka (dolů)
-    (510, 570), # Šestá zatáčka (doprava)
-    (690, 570)  # Konec cesty (cíl - sklad tofu)
-]
-
-WAYPOINTY_LEVEL_2 = [
-    (30, 90),   # Start vlevo nahoře
-    (510, 90),  # Doprava
-    (510, 210), # Dolů
-    (150, 210), # Doleva
-    (150, 330), # Dolů
-    (510, 330), # Doprava
-    (510, 450), # Dolů
-    (150, 450), # Doleva
-    (150, 570), # Dolů
-    (690, 570)  # Konec vpravo dole
-]
+WAYPOINTY = [(30, 90), (150, 90), (150, 510), (390, 510), (390, 150), (510, 150), (510, 570), (690, 570)]
+WAYPOINTY_LEVEL_2 = [(30, 90), (510, 90), (510, 210), (150, 210), (150, 330), (510, 330), (510, 450), (150, 450), (150, 570), (690, 570)]
 
 AKTUALNI_MAPA = MAPA_LEVEL_1
 AKTUALNI_WAYPOINTY = WAYPOINTY
 
-# --- DEFINICE KYTEK (Podrobnější data) ---
-# Cooldown je v milisekundách (1000ms = 1 vteřina)
+# --- DEFINICE KYTEK ---
 KYTKA_1_DATA = {
-    "nazev": "Hrachostřel",
-    "cena": 100,
-    "barva": (0, 200, 0),
-    "typ": "utocna",
-    "dostřel": 250, # radius v pixelech
-    "cooldown": 800  # jak často střílí (ms)
+    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800
 }
-
 KYTKA_2_DATA = {
-    "nazev": "Slunečnice",
-    "cena": 50,
-    "barva": (255, 255, 0),
-    "typ": "ekonomicka",
-    "cooldown": 3000, # dává peníze každé 3 vteřiny
-    "vydelek": 25     # kolik peněz dá
+    "nazev": "Slunečnice", "cena": 50, "barva": (255, 255, 0), "typ": "ekonomicka", "cooldown": 3000, "vydelek": 25
 }
-
 SEZNAM_DOSTUPNYCH_KYTEK = [KYTKA_1_DATA, KYTKA_2_DATA]
 
-# --- DEFINICE STŘEL (Projectiles) ---
+# --- DEFINICE STŘEL ---
 STRELA_HRY_DATA = {
-    "rychlost": 6,
-    "poskozeni": 15,
-    "barva": (255, 215, 0), # Zlatá kulička
-    "velikost": 6
+    "rychlost": 6, "poskozeni": 15, "barva": (255, 215, 0), "velikost": 6
 }
