@@ -3,7 +3,7 @@ import sys
 import main
 import config
 
-class MenuSystem:
+class Menu:
     def __init__(self):
         pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
@@ -193,5 +193,5 @@ class MenuSystem:
             pygame.display.flip()
 
 def main_menu():
-    menu = MenuSystem()
+    menu = Menu()
     menu.main_menu()

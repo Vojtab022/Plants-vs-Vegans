@@ -78,7 +78,7 @@ class PlantsVsVegansGame:
                 self.running = False
             elif self.settings_btn.collidepoint(pos):
                 import menu
-                m = menu.MenuSystem()
+                m = menu.Menu()
                 m.settings_menu()
         else:
             if mouse_y < config.VYSKA_MAPY:
