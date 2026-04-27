@@ -62,7 +62,7 @@ KYTKA_1_DATA = {
     "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800
 }
 KYTKA_2_DATA = {
-    "nazev": "Slunečnice", "cena": 50, "barva": (255, 255, 0), "typ": "ekonomicka", "cooldown": 3000, "vydelek": 25
+    "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 3000, "vydelek": 25
 }
 SEZNAM_DOSTUPNYCH_KYTEK = [KYTKA_1_DATA, KYTKA_2_DATA]
 

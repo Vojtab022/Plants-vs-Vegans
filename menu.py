@@ -1,16 +1,21 @@
 import pygame
 import sys
-import main
 import config
+from ui import Button
 
 class Menu:
-    def __init__(self):
+    def __init__(self, in_game=False):
         pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         
-        self.width, self.height = 800, 600
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Plants vs Vegans")
+        if not in_game:
+            self.width, self.height = 800, 600
+            self.screen = pygame.display.set_mode((self.width, self.height))
+            pygame.display.set_caption("Plants vs Vegans")
+            self.hraj_hudbu_menu()
+        else:
+            self.screen = pygame.display.get_surface()
+            self.width, self.height = self.screen.get_size()
         
         self.font = pygame.font.SysFont(None, 40)
         self.title_font = pygame.font.SysFont(None, 60)
@@ -25,23 +30,22 @@ class Menu:
         except (pygame.error, FileNotFoundError):
             self.click_sound = None
             
-        self.play_btn = pygame.Rect(200, 200, 400, 60)
-        self.settings_btn = pygame.Rect(200, 280, 400, 60)
-        self.quit_btn = pygame.Rect(200, 360, 400, 60)
+        self.play_btn = Button(200, 200, 400, 60, "Play", self.font, self.DARK_GREEN, self.GREEN)
+        self.settings_btn = Button(200, 280, 400, 60, "Settings", self.font, self.DARK_GREEN, self.GREEN)
+        self.quit_btn = Button(200, 360, 400, 60, "Quit", self.font, self.DARK_GREEN, self.GREEN)
         
-        self.fps_btn = pygame.Rect(200, 120, 400, 50)
-        self.cursor_btn = pygame.Rect(200, 180, 400, 50)
-        self.vol_music_down = pygame.Rect(200, 260, 50, 50)
-        self.vol_music_up = pygame.Rect(550, 260, 50, 50)
-        self.vol_sfx_down = pygame.Rect(200, 320, 50, 50)
-        self.vol_sfx_up = pygame.Rect(550, 320, 50, 50)
-        self.back_btn = pygame.Rect(200, 420, 400, 60)
+        self.fps_btn = Button(200, 120, 400, 50, f"FPS: {config.FPS}", self.font, self.DARK_GREEN, self.GREEN)
+        self.cursor_btn = Button(200, 180, 400, 50, f"Cursor: {config.CURSOR_SKIN}", self.font, self.DARK_GREEN, self.GREEN)
+        self.vol_music_down = Button(200, 260, 50, 50, "-", self.font, self.DARK_GREEN, self.GREEN)
+        self.vol_music_up = Button(550, 260, 50, 50, "+", self.font, self.DARK_GREEN, self.GREEN)
+        self.vol_sfx_down = Button(200, 320, 50, 50, "-", self.font, self.DARK_GREEN, self.GREEN)
+        self.vol_sfx_up = Button(550, 320, 50, 50, "+", self.font, self.DARK_GREEN, self.GREEN)
+        self.back_btn = Button(200, 420, 400, 60, "Back", self.font, self.DARK_GREEN, self.GREEN)
         
-        self.level1_btn = pygame.Rect(200, 200, 400, 60)
-        self.level2_btn = pygame.Rect(200, 280, 400, 60)
+        self.level1_btn = Button(200, 200, 400, 60, "Level 1", self.font, self.DARK_GREEN, self.GREEN)
+        self.level2_btn = Button(200, 280, 400, 60, "Level 2", self.font, self.DARK_GREEN, self.GREEN)
 
         self.nastav_kurzor(config.CURSOR_SKIN)
-        self.hraj_hudbu_menu()
 
     def hraj_hudbu_menu(self):
         try:
@@ -55,13 +59,6 @@ class Menu:
         if self.click_sound:
             self.click_sound.set_volume(config.HLASITOST_EFEKTU)
             self.click_sound.play()
-
-    def draw_button(self, rect, text, mouse_pos):
-        color = self.DARK_GREEN if rect.collidepoint(mouse_pos) else self.GREEN
-        pygame.draw.rect(self.screen, color, rect)
-        label = self.font.render(text, True, self.WHITE)
-        text_rect = label.get_rect(center=rect.center)
-        self.screen.blit(label, text_rect)
 
     def nastav_kurzor(self, skin_name):
         try:
@@ -84,26 +81,26 @@ class Menu:
             title = self.title_font.render("Select Level", True, self.WHITE)
             self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 100))
             
-            self.draw_button(self.level1_btn, "Level 1", mouse_pos)
-            self.draw_button(self.level2_btn, "Level 2", mouse_pos)
-            self.draw_button(self.back_btn, "Back", mouse_pos)
+            self.level1_btn.draw(self.screen)
+            self.level2_btn.draw(self.screen)
+            self.back_btn.draw(self.screen)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.level1_btn.collidepoint(mouse_pos):
+                    if self.level1_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         config.AKTUALNI_MAPA = config.MAPA_LEVEL_1
                         config.AKTUALNI_WAYPOINTY = config.WAYPOINTY
                         return True
-                    if self.level2_btn.collidepoint(mouse_pos):
+                    if self.level2_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         config.AKTUALNI_MAPA = config.MAPA_LEVEL_2
                         config.AKTUALNI_WAYPOINTY = config.WAYPOINTY_LEVEL_2
                         return True
-                    if self.back_btn.collidepoint(mouse_pos):
+                    if self.back_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         return False
             pygame.display.flip()
@@ -116,48 +113,50 @@ class Menu:
             title = self.title_font.render("Settings", True, self.WHITE)
             self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 50))
             
-            self.draw_button(self.fps_btn, f"FPS: {config.FPS}", mouse_pos)
-            self.draw_button(self.cursor_btn, f"Cursor: {config.CURSOR_SKIN}", mouse_pos)
+            self.fps_btn.text = f"FPS: {config.FPS}"
+            self.fps_btn.draw(self.screen)
+            self.cursor_btn.text = f"Cursor: {config.CURSOR_SKIN}"
+            self.cursor_btn.draw(self.screen)
             
-            self.draw_button(self.vol_music_down, "-", mouse_pos)
+            self.vol_music_down.draw(self.screen)
             music_txt = self.font.render(f"Music: {int(config.HLASITOST_HUDBY * 100)}%", True, self.WHITE)
             self.screen.blit(music_txt, (300, 270))
-            self.draw_button(self.vol_music_up, "+", mouse_pos)
+            self.vol_music_up.draw(self.screen)
             
-            self.draw_button(self.vol_sfx_down, "-", mouse_pos)
+            self.vol_sfx_down.draw(self.screen)
             sfx_txt = self.font.render(f"SFX: {int(config.HLASITOST_EFEKTU * 100)}%", True, self.WHITE)
             self.screen.blit(sfx_txt, (300, 330))
-            self.draw_button(self.vol_sfx_up, "+", mouse_pos)
+            self.vol_sfx_up.draw(self.screen)
             
-            self.draw_button(self.back_btn, "Back", mouse_pos)
+            self.back_btn.draw(self.screen)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.fps_btn.collidepoint(mouse_pos):
+                    if self.fps_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         config.FPS = 30 if config.FPS == 60 else 60
-                    if self.cursor_btn.collidepoint(mouse_pos):
+                    if self.cursor_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         config.CURSOR_SKIN = "Zelený kurzor" if config.CURSOR_SKIN == "Zlatý kurzor" else "Zlatý kurzor"
                         self.nastav_kurzor(config.CURSOR_SKIN)
-                    if self.vol_music_down.collidepoint(mouse_pos):
+                    if self.vol_music_down.is_clicked(mouse_pos):
                         config.HLASITOST_HUDBY = max(0.0, config.HLASITOST_HUDBY - 0.1)
                         pygame.mixer.music.set_volume(config.HLASITOST_HUDBY)
                         self.hraj_klik()
-                    if self.vol_music_up.collidepoint(mouse_pos):
+                    if self.vol_music_up.is_clicked(mouse_pos):
                         config.HLASITOST_HUDBY = min(1.0, config.HLASITOST_HUDBY + 0.1)
                         pygame.mixer.music.set_volume(config.HLASITOST_HUDBY)
                         self.hraj_klik()
-                    if self.vol_sfx_down.collidepoint(mouse_pos):
+                    if self.vol_sfx_down.is_clicked(mouse_pos):
                         config.HLASITOST_EFEKTU = max(0.0, config.HLASITOST_EFEKTU - 0.1)
                         self.hraj_klik()
-                    if self.vol_sfx_up.collidepoint(mouse_pos):
+                    if self.vol_sfx_up.is_clicked(mouse_pos):
                         config.HLASITOST_EFEKTU = min(1.0, config.HLASITOST_EFEKTU + 0.1)
                         self.hraj_klik()
-                    if self.back_btn.collidepoint(mouse_pos):
+                    if self.back_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         return
             pygame.display.flip()
@@ -167,26 +166,23 @@ class Menu:
             self.screen.fill(self.GRAY)
             mouse_pos = pygame.mouse.get_pos()
             
-            self.draw_button(self.play_btn, "Play", mouse_pos)
-            self.draw_button(self.settings_btn, "Settings", mouse_pos)
-            self.draw_button(self.quit_btn, "Quit", mouse_pos)
+            self.play_btn.draw(self.screen)
+            self.settings_btn.draw(self.screen)
+            self.quit_btn.draw(self.screen)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.play_btn.collidepoint(mouse_pos):
+                    if self.play_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         if self.levels_menu():
-                            pygame.mixer.music.stop()
-                            main.start_game()
-                            self.screen = pygame.display.set_mode((self.width, self.height))
-                            self.hraj_hudbu_menu()
-                    if self.settings_btn.collidepoint(mouse_pos):
+                            return "PLAY"
+                    if self.settings_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         self.settings_menu()
-                    if self.quit_btn.collidepoint(mouse_pos):
+                    if self.quit_btn.is_clicked(mouse_pos):
                         self.hraj_klik()
                         pygame.quit()
                         sys.exit()

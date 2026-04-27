@@ -15,6 +15,12 @@ class Strela:
         
         self.je_ziva = True # Pro mazání
 
+        try:
+            self.image = pygame.image.load("gfx/hracho_bullet.png").convert_alpha()
+            self.image = pygame.transform.smoothscale(self.image, (160, 160)) # Velikost náboje
+        except (pygame.error, FileNotFoundError):
+            self.image = None
+
     def update(self):
         # --- NOVÉ: ŘÍZENÝ POHYB (HOMING) ---
         
@@ -48,5 +54,9 @@ class Strela:
             self.je_ziva = False
 
     def draw(self, screen):
-        # (Draw ponecháme beze změny)
-        pygame.draw.circle(screen, self.data["barva"], (int(self.pozice.x), int(self.pozice.y)), self.data["velikost"])
+        if self.image:
+            # Vykreslení textury náboje
+            rect = self.image.get_rect(center=(int(self.pozice.x), int(self.pozice.y)))
+            screen.blit(self.image, rect)
+        else:
+            pygame.draw.circle(screen, self.data["barva"], (int(self.pozice.x), int(self.pozice.y)), self.data["velikost"])
