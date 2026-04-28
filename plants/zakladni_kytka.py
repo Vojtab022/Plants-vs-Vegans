@@ -19,7 +19,7 @@ class ZakladniKytka:
         self.image = None # Bude obsahovat načtený obrázek
 
     # Tuhle metodu bude mít každá kytka jinou
-    def update(self, seznam_veganu, seznam_strel, aktualni_penize):
+    def update(self, seznam_veganu, seznam_strel, hrac):
         pass # Uděláme v podtřídách
         
     def draw(self, screen):

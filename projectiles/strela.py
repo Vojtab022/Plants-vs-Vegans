@@ -2,7 +2,7 @@ import pygame
 import config
 
 class Strela:
-    def __init__(self, start_x, start_y, cilový_vegan):
+    def __init__(self, start_x, start_y, cilový_vegan, poskozeni=15):
         # Pozice střely
         self.pozice = pygame.math.Vector2(start_x, start_y)
         
@@ -12,6 +12,7 @@ class Strela:
         
         self.data = config.STRELA_HRY_DATA
         self.rychlost = self.data["rychlost"] # Načteme rychlost z configu
+        self.poskozeni = poskozeni
         
         self.je_ziva = True # Pro mazání
 

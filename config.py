@@ -59,12 +59,15 @@ AKTUALNI_WAYPOINTY = WAYPOINTY
 
 # --- DEFINICE KYTEK ---
 KYTKA_1_DATA = {
-    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800
+    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800, "poskozeni": 15
 }
 KYTKA_2_DATA = {
-    "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 3000, "vydelek": 25
+    "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 8000, "vydelek": 25
 }
-SEZNAM_DOSTUPNYCH_KYTEK = [KYTKA_1_DATA, KYTKA_2_DATA]
+KYTKA_3_DATA = {
+    "nazev": "Kaktus", "cena": 150, "barva": (0, 100, 0), "typ": "utocna", "dostřel": 600, "cooldown": 2500, "poskozeni": 60
+}
+SEZNAM_DOSTUPNYCH_KYTEK = [KYTKA_1_DATA, KYTKA_2_DATA, KYTKA_3_DATA]
 
 # --- DEFINICE STŘEL ---
 STRELA_HRY_DATA = {

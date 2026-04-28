@@ -18,7 +18,7 @@ class Studna(ZakladniKytka):
             
         self.image = self.img_idle
 
-    def update(self, seznam_veganu, seznam_strel, aktualni_penize):
+    def update(self, seznam_veganu, seznam_strel, hrac):
         nyni = pygame.time.get_ticks()
         
         # Animace aktivní studny (ukáže kapku 500ms po výrobě peněz)
@@ -27,12 +27,9 @@ class Studna(ZakladniKytka):
 
         # Generování peněz
         if nyni - self.posledni_akce_cas > self.data["cooldown"]:
-            # Přidáme peníze do peněženky v main.py (musíme vrátit novou hodnotu)
-            aktualni_penize += self.data["vydelek"]
-            print(f"Studna vyrobila peníze! Celkem: ${aktualni_penize}")
+            # Přidáme peníze do peněženky v objektu Hrac
+            hrac.pridej_penize(self.data["vydelek"])
+            print(f"Studna vyrobila peníze! Celkem: ${hrac.penize}")
             
             self.posledni_akce_cas = nyni
             self.cas_posledni_animace = nyni
-            return aktualni_penize # Vracíme aktualizovaný stav peněz
-
-        return aktualni_penize # Vracíme beze změny

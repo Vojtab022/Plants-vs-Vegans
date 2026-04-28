@@ -3,8 +3,10 @@ import sys
 import random
 import config
 import menu
-from vegans.zakladni_vegan import ZakladniVegan 
+from player import Hrac
+from wave_manager import WaveManager
 from plants.hrachostrel import Hrachostrel
+from plants.kaktus import Kaktus
 from plants.studna import Studna
 from ui import Button
 
@@ -21,23 +23,21 @@ class PlantsVsVegansGame:
         self.game_over = False
         self.action_after_quit = "MENU"
         self.pause_start_cas = 0
-        self.penize = 200
+        self.hrac = Hrac(200)
+        self.wave_manager = WaveManager()
         self.vybrany_typ_kytky_data = None
         self.survived_time_ms = 0
         
+        # Výběr a prodej existující kytky
+        self.vybrana_polozena_kytka = None
+        self.sell_btn = Button(0, 0, 120, 35, "Prodat", self.font_ui, (200, 0, 0), (255, 50, 50))
+
         # Seznamy objektů 
         self.seznam_veganu = []
         self.seznam_kytek = []
         self.seznam_strel = []
         self.seznam_obsazenych_policek = []
         
-        # Časovače
-        self.cas_posledniho_spawnu = pygame.time.get_ticks()
-        self.celkem_vygenerovano = 0
-        self.spawn_interval = 2500
-        self.max_veganu_ve_vlne = 10
-        self.current_wave = 1
-
         # UI Tlačítka pro pauzu
         btn_w, btn_h = 200, 60
         stred_x = config.SIRKA_OKNA // 2 - btn_w // 2
@@ -48,7 +48,6 @@ class PlantsVsVegansGame:
         self.main_menu_btn = Button(stred_x, 360, btn_w, btn_h, "Main Menu", self.font_ui, barva_zaklad, barva_hover)
 
         # Přípravná fáze
-        self.wave_started = False
         self.start_wave_btn = Button(config.SIRKA_OKNA - 350, config.VYSKA_MAPY + 20, 180, 60, "Start Wave", self.font_ui, (200, 0, 0), (255, 50, 50))
 
         # Tlačítka pro výběr kytek v UI
@@ -87,18 +86,6 @@ class PlantsVsVegansGame:
                     radek_textur.append(None) # Tráva nebo fallback
             self.grid_textur.append(radek_textur)
 
-    def spawn_vegans(self):
-        if not self.wave_started:
-            return
-            
-        nyni = pygame.time.get_ticks()
-        if nyni - self.cas_posledniho_spawnu > self.spawn_interval and self.celkem_vygenerovano < self.max_veganu_ve_vlne:
-            novy_vegan = ZakladniVegan(config.AKTUALNI_WAYPOINTY)
-            self.seznam_veganu.append(novy_vegan)
-            self.cas_posledniho_spawnu = nyni
-            self.celkem_vygenerovano += 1
-            print(f"Pozor! Na mapu vstoupil vegan číslo {self.celkem_vygenerovano}!")
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -117,7 +104,7 @@ class PlantsVsVegansGame:
         else:
             self.paused = False
             posun = pygame.time.get_ticks() - self.pause_start_cas
-            self.cas_posledniho_spawnu += posun
+            self.wave_manager.posun_cas(posun)
             for kytka in self.seznam_kytek:
                 kytka.posledni_akce_cas += posun
 
@@ -140,39 +127,75 @@ class PlantsVsVegansGame:
                 m.settings_menu()
         else:
             # Kontrola kliknutí na tlačítko Start Wave (pokud vlna ještě nezačala)
-            if not self.wave_started and self.start_wave_btn.is_clicked(pos):
-                self.wave_started = True
-                nyni = pygame.time.get_ticks()
-                self.cas_posledniho_spawnu = nyni
+            nyni = pygame.time.get_ticks()
+            if not self.wave_manager.wave_started and self.start_wave_btn.is_clicked(pos):
+                self.wave_manager.start_wave(nyni)
                 
                 # Resetujeme časovače u již položených kytek, aby nezačaly střílet/vydělávat s předstihem
                 for kytka in self.seznam_kytek:
                     kytka.posledni_akce_cas = nyni
                 return
 
+            # Kontrola kliknutí na plovoucí tlačítko Prodat
+            if self.vybrana_polozena_kytka and self.sell_btn.is_clicked(pos):
+                self.sell_plant()
+                return
+
             if mouse_y < config.VYSKA_MAPY:
                 grid_x = mouse_x // config.VELIKOST_POLICKA
                 grid_y = mouse_y // config.VELIKOST_POLICKA
-                self.place_plant(grid_x, grid_y)
+                
+                # Zkusíme najít kytku na políčku, na které jsme klikli
+                clicked_kytka = next((k for k in self.seznam_kytek if k.grid_x == grid_x and k.grid_y == grid_y), None)
+                
+                if clicked_kytka:
+                    self.vybrana_polozena_kytka = clicked_kytka
+                    self.vybrany_typ_kytky_data = None # Zrušíme případný výběr kytky z UI
+                    
+                    # Nastavení pozice tlačítka Prodat těsně nad kytkou
+                    self.sell_btn.rect.x = clicked_kytka.x - self.sell_btn.rect.width // 2
+                    self.sell_btn.rect.y = clicked_kytka.y - config.VELIKOST_POLICKA - 15
+                    if self.sell_btn.rect.y < 0: # Pojistka, aby tlačítko nevyjelo mimo obrazovku
+                        self.sell_btn.rect.y = clicked_kytka.y + config.VELIKOST_POLICKA // 2 + 10
+                        
+                    cena = clicked_kytka.data["cena"] // 2
+                    self.sell_btn.text = f"Prodat ${cena}"
+                else:
+                    # Klikli jsme na prázdné políčko
+                    if self.vybrany_typ_kytky_data:
+                        self.place_plant(grid_x, grid_y)
+                    else:
+                        self.vybrana_polozena_kytka = None # Zruší výběr, pokud klikneme do prázdna
             else:
                 self.select_ui_item(mouse_x, mouse_y)
 
     def place_plant(self, gx, gy):
         if self.vybrany_typ_kytky_data and config.AKTUALNI_MAPA[gy][gx] == 0:
             if (gx, gy) not in self.seznam_obsazenych_policek:
-                if self.penize >= self.vybrany_typ_kytky_data["cena"]:
-                    self.penize -= self.vybrany_typ_kytky_data["cena"]
-                    if self.vybrany_typ_kytky_data["typ"] == "utocna":
+                if self.hrac.ma_dostatek(self.vybrany_typ_kytky_data["cena"]):
+                    self.hrac.uber_penize(self.vybrany_typ_kytky_data["cena"])
+                    if self.vybrany_typ_kytky_data["nazev"] == "Hrachostřel":
                         self.seznam_kytek.append(Hrachostrel(gx, gy))
+                    elif self.vybrany_typ_kytky_data["nazev"] == "Kaktus":
+                        self.seznam_kytek.append(Kaktus(gx, gy))
                     elif self.vybrany_typ_kytky_data["typ"] == "ekonomicka":
                         self.seznam_kytek.append(Studna(gx, gy))
                     self.seznam_obsazenych_policek.append((gx, gy))
                     self.vybrany_typ_kytky_data = None
 
+    def sell_plant(self):
+        if self.vybrana_polozena_kytka:
+            cena = self.vybrana_polozena_kytka.data["cena"] // 2
+            self.hrac.pridej_penize(cena)
+            self.seznam_kytek.remove(self.vybrana_polozena_kytka)
+            self.seznam_obsazenych_policek.remove((self.vybrana_polozena_kytka.grid_x, self.vybrana_polozena_kytka.grid_y))
+            self.vybrana_polozena_kytka = None
+
     def select_ui_item(self, mx, my):
         for item in self.plant_buttons:
             if item["btn"].is_clicked((mx, my)):
                 self.vybrany_typ_kytky_data = item["data"]
+                self.vybrana_polozena_kytka = None # Zruší výběr postavené kytky
 
     def update(self):
         if self.paused or self.game_over:
@@ -181,29 +204,21 @@ class PlantsVsVegansGame:
         # Přičteme čas (v milisekundách), který uběhl od posledního snímku
         self.survived_time_ms += self.clock.get_time()
             
-        # Kontrola dokončení vlny
-        if self.wave_started and self.celkem_vygenerovano == self.max_veganu_ve_vlne and len(self.seznam_veganu) == 0:
-            self.current_wave += 1
-            self.max_veganu_ve_vlne += 5 # Každou vlnu přidáme 5 veganů
-            self.spawn_interval = max(500, self.spawn_interval - 200) # Budou se spawnovat rychleji
-            self.celkem_vygenerovano = 0
-            self.wave_started = False
-            self.penize += 100 # Odměna za přežití vlny
-            return
-        
-        self.spawn_vegans()
+        self.wave_manager.update(self.seznam_veganu, self.hrac)
         
         for kytka in self.seznam_kytek:
-            nove_penize = kytka.update(self.seznam_veganu, self.seznam_strel, self.penize)
-            if nove_penize is not None:
-                self.penize = nove_penize
+            if not self.wave_manager.wave_started:
+                kytka.posledni_akce_cas = pygame.time.get_ticks()
+                
+            kytka.update(self.seznam_veganu, self.seznam_strel, self.hrac)
 
         for strela in self.seznam_strel:
             strela.update()
             for vegan in self.seznam_veganu:
                 dist = strela.pozice.distance_to(vegan.pozice)
-                if dist < 15:
-                    vegan.hp -= config.STRELA_HRY_DATA["poskozeni"]
+                # Hitbox záleží na velikosti (poloměru) konkrétního vegana
+                if dist < vegan.polomer + 5: 
+                    vegan.vezmi_poskozeni(strela.poskozeni)
                     strela.je_ziva = False
 
         self.seznam_strel = [strela for strela in self.seznam_strel if strela.je_ziva]
@@ -232,6 +247,16 @@ class PlantsVsVegansGame:
         for strela in self.seznam_strel: strela.draw(self.screen)
         for vegan in self.seznam_veganu: vegan.draw(self.screen)
             
+        # Vykreslení dosahu a tlačítka u aktuálně vybrané kytky na mapě
+        if self.vybrana_polozena_kytka:
+            kytka = self.vybrana_polozena_kytka
+            if "dostřel" in kytka.data:
+                s = pygame.Surface((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.SRCALPHA)
+                pygame.draw.circle(s, (255, 255, 255, 50), (kytka.x, kytka.y), kytka.data["dostřel"])
+                pygame.draw.circle(s, (255, 255, 255, 150), (kytka.x, kytka.y), kytka.data["dostřel"], 2)
+                self.screen.blit(s, (0, 0))
+            self.sell_btn.draw(self.screen)
+
         self.draw_ui()
 
         if self.game_over:
@@ -243,8 +268,8 @@ class PlantsVsVegansGame:
 
     def draw_ui(self):
         pygame.draw.rect(self.screen, config.BARVA_UI_POZADI, (0, config.VYSKA_MAPY, config.SIRKA_OKNA, config.VYSKA_UI))
-        penize_text = self.font_ui.render(f"Peníze: ${self.penize}", True, (255, 255, 255))
-        vlna_text = self.font_ui.render(f"Vlna: {self.current_wave}", True, (255, 255, 255))
+        penize_text = self.font_ui.render(f"Peníze: ${self.hrac.penize}", True, (255, 255, 255))
+        vlna_text = self.font_ui.render(f"Vlna: {self.wave_manager.current_wave}", True, (255, 255, 255))
         self.screen.blit(penize_text, (config.SIRKA_OKNA - 150, config.VYSKA_MAPY + 10))
         self.screen.blit(vlna_text, (config.SIRKA_OKNA - 150, config.VYSKA_MAPY + 40))
         
@@ -258,7 +283,7 @@ class PlantsVsVegansGame:
             
             btn.draw(self.screen)
 
-        if not self.wave_started:
+        if not self.wave_manager.wave_started:
             self.start_wave_btn.draw(self.screen)
 
     def draw_pause_menu(self):
@@ -286,7 +311,7 @@ class PlantsVsVegansGame:
         minutes = total_seconds // 60
         seconds = total_seconds % 60
         
-        lbl_wave = self.font_ui.render(f"Dosažená vlna: {self.current_wave}", True, (255, 255, 255))
+        lbl_wave = self.font_ui.render(f"Dosažená vlna: {self.wave_manager.current_wave}", True, (255, 255, 255))
         lbl_time = self.font_ui.render(f"Doba přežití: {minutes:02d}:{seconds:02d}", True, (255, 255, 255))
         self.screen.blit(lbl_wave, (config.SIRKA_OKNA//2 - lbl_wave.get_width()//2, 160))
         self.screen.blit(lbl_time, (config.SIRKA_OKNA//2 - lbl_time.get_width()//2, 190))
@@ -304,7 +329,7 @@ class PlantsVsVegansGame:
 
 def start_game():
     while True:
-        screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA))
+        screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.FULLSCREEN | pygame.SCALED)
         game = PlantsVsVegansGame(screen)
         action = game.run()
         if action != "RESTART":
@@ -317,5 +342,7 @@ if __name__ == "__main__":
         akce = m.main_menu()
         
         if akce == "PLAY":
-            pygame.mixer.music.stop()
+            # Zkontrolujeme, zda se zvukový modul úspěšně načetl, abychom předešli pádu hry
+            if pygame.mixer.get_init() is not None:
+                pygame.mixer.music.stop()
             start_game()

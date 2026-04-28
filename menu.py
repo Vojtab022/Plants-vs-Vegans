@@ -10,8 +10,15 @@ class Menu:
         
         if not in_game:
             self.width, self.height = 800, 600
-            self.screen = pygame.display.set_mode((self.width, self.height))
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
             pygame.display.set_caption("Plants vs Vegans")
+            
+            try:
+                ikona = pygame.image.load("gfx/hrachstrel_IDLE.png").convert_alpha()
+                pygame.display.set_icon(ikona)
+            except (pygame.error, FileNotFoundError):
+                pass
+                
             self.hraj_hudbu_menu()
         else:
             self.screen = pygame.display.get_surface()

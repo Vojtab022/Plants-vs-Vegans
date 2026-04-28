@@ -22,7 +22,7 @@ class Hrachostrel(ZakladniKytka): # Dědí ze ZakladniKytka
         self.image = self.img_idle
         self.uhel = 0 # Výchozí natočení (0 = nahoru)
 
-    def update(self, seznam_veganu, seznam_strel, aktualni_penize):
+    def update(self, seznam_veganu, seznam_strel, hrac):
         nyni = pygame.time.get_ticks()
         
         # --- LOGIKA ZAMĚŘOVÁNÍ (První v řadě) ---
@@ -57,7 +57,7 @@ class Hrachostrel(ZakladniKytka): # Dědí ze ZakladniKytka
         if nyni - self.posledni_akce_cas > self.data["cooldown"]:
             if prvni_vegan:
                 # Vytvoříme novou střelu
-                nova_strela = Strela(self.x, self.y, prvni_vegan)
+                nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 15))
                 seznam_strel.append(nova_strela)
                 self.posledni_akce_cas = nyni
                 self.cas_posledni_animace = nyni
