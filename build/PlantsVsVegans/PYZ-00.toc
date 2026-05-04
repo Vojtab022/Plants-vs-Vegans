@@ -201,6 +201,7 @@
    'C:\\Program Files\\Python313\\Lib\\logging\\__init__.py',
    'PYMODULE'),
   ('lzma', 'C:\\Program Files\\Python313\\Lib\\lzma.py', 'PYMODULE'),
+  ('mapa', 'C:\\Users\\Vojtech.Bezdek\\Plants-vs-Vegans\\mapa.py', 'PYMODULE'),
   ('menu', 'C:\\Users\\Vojtech.Bezdek\\Plants-vs-Vegans\\menu.py', 'PYMODULE'),
   ('numbers', 'C:\\Program Files\\Python313\\Lib\\numbers.py', 'PYMODULE'),
   ('opcode', 'C:\\Program Files\\Python313\\Lib\\opcode.py', 'PYMODULE'),
