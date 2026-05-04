@@ -2,7 +2,7 @@ import pygame
 import config
 
 class Strela:
-    def __init__(self, start_x, start_y, cilový_vegan, poskozeni=15):
+    def __init__(self, start_x, start_y, cilový_vegan, poskozeni, textura, velikost_textury=(160, 160)):
         # Pozice střely
         self.pozice = pygame.math.Vector2(start_x, start_y)
         
@@ -17,8 +17,8 @@ class Strela:
         self.je_ziva = True # Pro mazání
 
         try:
-            self.image = pygame.image.load("gfx/hracho_bullet.png").convert_alpha()
-            self.image = pygame.transform.smoothscale(self.image, (160, 160)) # Velikost náboje
+            self.image = pygame.image.load(textura).convert_alpha()
+            self.image = pygame.transform.smoothscale(self.image, velikost_textury) # Volitelná velikost textury
         except (pygame.error, FileNotFoundError):
             self.image = None
 

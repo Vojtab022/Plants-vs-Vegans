@@ -194,7 +194,3 @@ class Menu:
                         pygame.quit()
                         sys.exit()
             pygame.display.flip()
-
-def main_menu():
-    menu = Menu()
-    menu.main_menu()

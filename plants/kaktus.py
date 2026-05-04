@@ -49,7 +49,7 @@ class Kaktus(ZakladniKytka):
         if nyni - self.posledni_akce_cas > self.data["cooldown"]:
             if prvni_vegan:
                 # Kaktus střílí s vyšším poškozením (předáme ho střele)
-                nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 50))
+                nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 50), "gfx/Kaktus_bullet.png", (220, 220))
                 seznam_strel.append(nova_strela)
                 self.posledni_akce_cas = nyni
                 self.cas_posledni_animace = nyni

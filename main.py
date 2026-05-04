@@ -3,6 +3,7 @@ import sys
 import random
 import config
 import menu
+from mapa import HerniMapa
 from player import Hrac
 from wave_manager import WaveManager
 from plants.hrachostrel import Hrachostrel
@@ -15,6 +16,7 @@ class PlantsVsVegansGame:
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.font_ui = pygame.font.SysFont("Arial", 20, bold=True)
+        self.font_plants = pygame.font.SysFont("Arial", 16, bold=True) # Menší font pro delší názvy
         self.font_pause = pygame.font.SysFont("Arial", 60, bold=True)
         
         # Herní stav 
@@ -48,43 +50,34 @@ class PlantsVsVegansGame:
         self.main_menu_btn = Button(stred_x, 360, btn_w, btn_h, "Main Menu", self.font_ui, barva_zaklad, barva_hover)
 
         # Přípravná fáze
-        self.start_wave_btn = Button(config.SIRKA_OKNA - 350, config.VYSKA_MAPY + 20, 180, 60, "Start Wave", self.font_ui, (200, 0, 0), (255, 50, 50))
+        self.start_wave_btn = Button(config.SIRKA_OKNA - 280, config.VYSKA_MAPY + 20, 120, 60, "Start Wave", self.font_ui, (200, 0, 0), (255, 50, 50))
 
         # Tlačítka pro výběr kytek v UI
         self.plant_buttons = []
         for i, data in enumerate(config.SEZNAM_DOSTUPNYCH_KYTEK):
-            bx = 10 + (i * 160)
+            bx = 10 + (i * 142) # Lehce upravený rozestup
             by = config.VYSKA_MAPY + 10
             barva_zaklad = data["barva"]
             # Vypočítáme trochu světlejší barvu pro hover efekt
             barva_hover = (min(255, barva_zaklad[0]+40), min(255, barva_zaklad[1]+40), min(255, barva_zaklad[2]+40))
-            btn = Button(bx, by, 150, 80, f"{data['nazev']} ${data['cena']}", self.font_ui, barva_zaklad, barva_hover, (0, 0, 0))
+            
+            ikona = None
+            if "ikona" in data:
+                try:
+                    ikona_img = pygame.image.load(data["ikona"]).convert_alpha()
+                    ikona = pygame.transform.smoothscale(ikona_img, (40, 40))
+                except (pygame.error, FileNotFoundError):
+                    ikona = None
+                    
+            btn = Button(bx, by, 140, 80, f"{data['nazev']}\n${data['cena']}", self.font_plants, barva_zaklad, barva_hover, (0, 0, 0), icon=ikona)
             self.plant_buttons.append({"btn": btn, "data": data})
 
         # Tlačítka pro Game Over
         self.restart_btn = Button(stred_x, 260, btn_w, btn_h, "Restart", self.font_ui, (200, 0, 0), (255, 50, 50))
         self.go_main_menu_btn = Button(stred_x, 340, btn_w, btn_h, "Main Menu", self.font_ui, (200, 0, 0), (255, 50, 50))
 
-        # Načtení textur cesty a vygenerování fixní mapy textur
-        self.path_images = []
-        try:
-            for i in range(1, 4):
-                img = pygame.image.load(f"gfx/path{i}.png").convert_alpha()
-                img = pygame.transform.smoothscale(img, (config.VELIKOST_POLICKA, config.VELIKOST_POLICKA))
-                self.path_images.append(img)
-        except (pygame.error, FileNotFoundError):
-            self.path_images = None
-            
-        self.grid_textur = []
-        for radek in config.AKTUALNI_MAPA:
-            radek_textur = []
-            for policko in radek:
-                # Pokud je to cesta (1) a obrázky se úspěšně načetly, vybereme náhodný
-                if policko == 1 and self.path_images:
-                    radek_textur.append(random.choice(self.path_images))
-                else:
-                    radek_textur.append(None) # Tráva nebo fallback
-            self.grid_textur.append(radek_textur)
+        # OOP: Logika mapy je nyní kompletně oddělena v samostatné třídě
+        self.mapa = HerniMapa()
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -230,18 +223,8 @@ class PlantsVsVegansGame:
                 self.game_over = True
 
     def draw(self):
-        for radek_index in range(config.RADKU):
-            for sloupec_index in range(config.SLOUPCU):
-                cislo_policka = config.AKTUALNI_MAPA[radek_index][sloupec_index]
-                x = sloupec_index * config.VELIKOST_POLICKA
-                y = radek_index * config.VELIKOST_POLICKA
-                
-                if cislo_policka == 1 and self.grid_textur[radek_index][sloupec_index]:
-                    self.screen.blit(self.grid_textur[radek_index][sloupec_index], (x, y))
-                else:
-                    barva = config.BARVA_TRAVY if cislo_policka == 0 else config.BARVA_CESTY
-                    pygame.draw.rect(self.screen, barva, (x, y, config.VELIKOST_POLICKA, config.VELIKOST_POLICKA))
-                pygame.draw.rect(self.screen, config.BARVA_MRIZKY, (x, y, config.VELIKOST_POLICKA, config.VELIKOST_POLICKA), 1)
+        # OOP: Vykreslování mapy a mřížky delegujeme na instanci mapy
+        self.mapa.draw(self.screen, self.wave_manager.wave_started)
 
         for kytka in self.seznam_kytek: kytka.draw(self.screen)
         for strela in self.seznam_strel: strela.draw(self.screen)
@@ -327,22 +310,28 @@ class PlantsVsVegansGame:
             self.clock.tick(config.FPS)
         return self.action_after_quit
 
-def start_game():
-    while True:
-        screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.FULLSCREEN | pygame.SCALED)
-        game = PlantsVsVegansGame(screen)
-        action = game.run()
-        if action != "RESTART":
-            break
+class HerniAplikace:
+    """Hlavní třída aplikace, která funguje jako State Manager a řídí menu vs hru."""
+    def spust_hru(self):
+        while True:
+            screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.FULLSCREEN | pygame.SCALED)
+            game = PlantsVsVegansGame(screen)
+            action = game.run()
+            if action != "RESTART":
+                break
+                
+    def run(self):
+        while True:
+            m = menu.Menu()
+            akce = m.main_menu()
+            
+            if akce == "PLAY":
+                if pygame.mixer.get_init() is not None:
+                    pygame.mixer.music.stop()
+                self.spust_hru()
+            else:
+                break
 
 if __name__ == "__main__":
-    # Hlavní smyčka aplikace (State Manager), která řídí přechody mezi menu a hrou
-    while True:
-        m = menu.Menu()
-        akce = m.main_menu()
-        
-        if akce == "PLAY":
-            # Zkontrolujeme, zda se zvukový modul úspěšně načetl, abychom předešli pádu hry
-            if pygame.mixer.get_init() is not None:
-                pygame.mixer.music.stop()
-            start_game()
+    app = HerniAplikace()
+    app.run()

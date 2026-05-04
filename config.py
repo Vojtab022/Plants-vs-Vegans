@@ -47,7 +47,7 @@ VYSKA_OKNA = VYSKA_MAPY + VYSKA_UI
 # --- BARVY ---
 BARVA_TRAVY = (34, 139, 34)
 BARVA_CESTY = (139, 69, 19)
-BARVA_MRIZKY = (0, 0, 0)
+BARVA_MRIZKY = (150, 150, 150, 80) # Šedá, částečně průhledná (R, G, B, Alpha)
 BARVA_UI_POZADI = (100, 100, 100)
 BARVA_UI_VYBER = (255, 215, 0)
 
@@ -59,13 +59,13 @@ AKTUALNI_WAYPOINTY = WAYPOINTY
 
 # --- DEFINICE KYTEK ---
 KYTKA_1_DATA = {
-    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800, "poskozeni": 15
+    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800, "poskozeni": 25, "ikona": "gfx/hrachstrel_IDLE.png"
 }
 KYTKA_2_DATA = {
-    "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 8000, "vydelek": 25
+    "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 8000, "vydelek": 25, "ikona": "gfx/well.png"
 }
 KYTKA_3_DATA = {
-    "nazev": "Kaktus", "cena": 150, "barva": (0, 100, 0), "typ": "utocna", "dostřel": 600, "cooldown": 2500, "poskozeni": 60
+    "nazev": "Kaktus", "cena": 150, "barva": (0, 100, 0), "typ": "utocna", "dostřel": 600, "cooldown": 2500, "poskozeni": 60, "ikona": "gfx/Kaktus_IDLE.png"
 }
 SEZNAM_DOSTUPNYCH_KYTEK = [KYTKA_1_DATA, KYTKA_2_DATA, KYTKA_3_DATA]
 
