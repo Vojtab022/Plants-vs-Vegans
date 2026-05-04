@@ -59,7 +59,7 @@ AKTUALNI_WAYPOINTY = WAYPOINTY
 
 # --- DEFINICE KYTEK ---
 KYTKA_1_DATA = {
-    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800, "poskozeni": 25, "ikona": "gfx/hrachstrel_IDLE.png"
+    "nazev": "Hrachostřel", "cena": 100, "barva": (0, 200, 0), "typ": "utocna", "dostřel": 250, "cooldown": 800, "poskozeni": 20, "ikona": "gfx/hrachstrel_IDLE.png"
 }
 KYTKA_2_DATA = {
     "nazev": "Studna", "cena": 50, "barva": (0, 150, 255), "typ": "ekonomicka", "cooldown": 8000, "vydelek": 25, "ikona": "gfx/well.png"
