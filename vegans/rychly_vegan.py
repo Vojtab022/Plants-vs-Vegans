@@ -1,6 +1,7 @@
 from vegans.zakladni_vegan import ZakladniVegan
+import config
 
 class RychlyVegan(ZakladniVegan):
     def __init__(self, waypoints):
-        # Rychlý, málo HP, menší poloměr
-        super().__init__(waypoints, hp=40, rychlost=4, barva=(255, 255, 0), polomer=12)
+        d = config.VEGAN_RYCHLY_DATA
+        super().__init__(waypoints, hp=d["hp"], rychlost=d["rychlost"], barva=d["barva"], polomer=d["polomer"], obrazek_cesta="gfx/light.png")

@@ -22,7 +22,7 @@ class Hrachostrel(ZakladniKytka): # Dědí ze ZakladniKytka
         self.image = self.img_idle
         self.uhel = 0 # Výchozí natočení (0 = nahoru)
 
-    def update(self, seznam_veganu, seznam_strel, hrac):
+    def update(self, seznam_veganu, seznam_strel, hrac, game_speed=1):
         nyni = pygame.time.get_ticks()
         
         # --- LOGIKA ZAMĚŘOVÁNÍ (První v řadě) ---
@@ -54,10 +54,10 @@ class Hrachostrel(ZakladniKytka): # Dědí ze ZakladniKytka
             self.uhel = math.degrees(math.atan2(-dy, dx)) - 90
 
         # --- STŘELBA ---
-        if nyni - self.posledni_akce_cas > self.data["cooldown"]:
+        if nyni - self.posledni_akce_cas > (self.data["cooldown"] / game_speed):
             if prvni_vegan:
                 # Vytvoříme novou střelu
-                nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 15), "_internal/gfx/hracho_bullet.png", (160, 160))
+                nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 15), "gfx/hracho_bullet.png", (160, 160))
                 seznam_strel.append(nova_strela)
                 self.posledni_akce_cas = nyni
                 self.cas_posledni_animace = nyni
@@ -68,3 +68,4 @@ class Hrachostrel(ZakladniKytka): # Dědí ze ZakladniKytka
             zakladni_obr = self.img_shoot if nyni - self.cas_posledni_animace < 200 else self.img_idle
             # Otočíme ho podle aktuálního úhlu a uložíme
             self.image = pygame.transform.rotate(zakladni_obr, self.uhel)
+            

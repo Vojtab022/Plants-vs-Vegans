@@ -1,6 +1,8 @@
 from vegans.zakladni_vegan import ZakladniVegan
+import config
 
 class TankVegan(ZakladniVegan):
     def __init__(self, waypoints):
-        # Pomalý, hodně HP, obrovský
-        super().__init__(waypoints, hp=350, rychlost=1, barva=(139, 0, 0), polomer=22)
+        # Tady pro změnu využijeme variantu heavy_chew.png (poloměr 22 udělá obrázek 44x44)
+        d = config.VEGAN_TANK_DATA
+        super().__init__(waypoints, hp=d["hp"], rychlost=d["rychlost"], barva=d["barva"], polomer=d["polomer"], obrazek_cesta="gfx/heavy_chew.png")

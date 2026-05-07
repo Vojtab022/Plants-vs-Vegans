@@ -1,6 +1,7 @@
 from vegans.zakladni_vegan import ZakladniVegan
+import config
 
 class StredniVegan(ZakladniVegan):
     def __init__(self, waypoints):
-        # Průměrný (stejný jako dřív)
-        super().__init__(waypoints, hp=80, rychlost=2, barva=(255, 128, 0), polomer=15)
+        d = config.VEGAN_STREDNI_DATA
+        super().__init__(waypoints, hp=d["hp"], rychlost=d["rychlost"], barva=d["barva"], polomer=d["polomer"], obrazek_cesta="gfx/medium.png")

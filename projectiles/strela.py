@@ -22,7 +22,7 @@ class Strela:
         except (pygame.error, FileNotFoundError):
             self.image = None
 
-    def update(self):
+    def update(self, game_speed=1):
         # --- NOVÉ: ŘÍZENÝ POHYB (HOMING) ---
         
         # 1. Zkontrolujeme, zda cíl stále existuje a je naživu (HP > 0)
@@ -35,13 +35,13 @@ class Strela:
             
             # 3. Pokud jsme už skoro u cíle, prostě se na něj "teleportujeme",
             # aby kolizní systém v main.py garantovaně detekoval zásah.
-            if vzdalenost < self.rychlost:
+            if vzdalenost < (self.rychlost * game_speed):
                 self.pozice = self.cil.pozice
             else:
                 # 4. Jinak normalizujeme směr a posuneme se (bezpečnostní pojistka)
                 if vzdalenost > 0:
                     smer_normalizovany = smer_k_cili.normalize()
-                    self.pozice += smer_normalizovany * self.rychlost
+                    self.pozice += smer_normalizovany * (self.rychlost * game_speed)
                 
         else:
             # Co když cíl umřel dřív, než střela doletěla?

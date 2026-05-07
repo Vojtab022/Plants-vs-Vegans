@@ -20,7 +20,7 @@ class Kaktus(ZakladniKytka):
         self.image = self.img_idle
         self.uhel = 0
 
-    def update(self, seznam_veganu, seznam_strel, hrac):
+    def update(self, seznam_veganu, seznam_strel, hrac, game_speed=1):
         nyni = pygame.time.get_ticks()
         
         prvni_vegan = None
@@ -46,7 +46,7 @@ class Kaktus(ZakladniKytka):
             dy = prvni_vegan.pozice.y - self.y
             self.uhel = math.degrees(math.atan2(-dy, dx)) - 90
 
-        if nyni - self.posledni_akce_cas > self.data["cooldown"]:
+        if nyni - self.posledni_akce_cas > (self.data["cooldown"] / game_speed):
             if prvni_vegan:
                 # Kaktus střílí s vyšším poškozením (předáme ho střele)
                 nova_strela = Strela(self.x, self.y, prvni_vegan, self.data.get("poskozeni", 50), "gfx/Kaktus_bullet.png", (220, 220))

@@ -2,7 +2,7 @@ import pygame
 import config
 
 class ZakladniVegan:
-    def __init__(self, waypoints, hp=100, rychlost=2, barva=(255, 0, 0), polomer=15):
+    def __init__(self, waypoints, hp=100, rychlost=2, barva=(255, 0, 0), polomer=15, obrazek_cesta=None):
         self.waypoints = waypoints
         self.aktualni_cil_index = 1
         self.pozice = pygame.math.Vector2(waypoints[0])
@@ -14,7 +14,18 @@ class ZakladniVegan:
         self.barva = barva
         self.polomer = polomer
 
-    def move(self):
+        # Načtení a škálování obrázku
+        self.image = None
+        if obrazek_cesta:
+            try:
+                img = pygame.image.load(obrazek_cesta).convert_alpha()
+                # Zvětšíme/zmenšíme obrázek podle poloměru (průměr = polomer * 2)
+                velikost = int(self.polomer * 2)
+                self.image = pygame.transform.smoothscale(img, (velikost, velikost))
+            except (pygame.error, FileNotFoundError):
+                self.image = None
+
+    def move(self, game_speed=1):
         # Zkontrolujeme, jestli už nejsme v cíli
         if self.aktualni_cil_index < len(self.waypoints):
             # Zjistíme, kam chceme jít
@@ -25,21 +36,24 @@ class ZakladniVegan:
             vzdalenost = smer.length()
             
             # Pokud jsme už skoro u cílového bodu, přepneme na další bod
-            if vzdalenost < self.rychlost:
+            if vzdalenost < (self.rychlost * game_speed):
                 self.aktualni_cil_index += 1
             else:
                 # Normalizujeme směr (aby nešel rychleji šikmo) a posuneme ho
                 smer = smer.normalize()
-                self.pozice += smer * self.rychlost
+                self.pozice += smer * (self.rychlost * game_speed)
 
     def vezmi_poskozeni(self, dmg):
         # Vegan si sám zpracuje odečtení životů
         self.hp -= dmg
 
     def draw(self, screen):
-        # Vykreslíme vegana jako kruh (aby se lišil od hranatých políček)
-        # int() používáme, protože pixely nemůžou být desetinná čísla
-        pygame.draw.circle(screen, self.barva, (int(self.pozice.x), int(self.pozice.y)), self.polomer)
+        # Vykreslíme obrázek vegana, nebo kruh pokud obrázek neexistuje
+        if self.image:
+            rect = self.image.get_rect(center=(int(self.pozice.x), int(self.pozice.y)))
+            screen.blit(self.image, rect)
+        else:
+            pygame.draw.circle(screen, self.barva, (int(self.pozice.x), int(self.pozice.y)), self.polomer)
         
         # --- VYKRESLENÍ HP BARU ---
         sirka_baru = max(30, self.polomer * 2) # Udržíme minimální šířku 30, ale u velkého bosse se bar roztáhne

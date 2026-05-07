@@ -1,15 +1,19 @@
 import pygame
 import sys
+import os
 import random
 import config
-import menu
-from mapa import HerniMapa
-from player import Hrac
-from wave_manager import WaveManager
+# --- OPRAVA PRO PYINSTALLER (.exe) ---
+if getattr(sys, 'frozen', False):
+    os.chdir(sys._MEIPASS)
+from ui.menu import Menu
+from core.mapa import HerniMapa
+from core.player import Hrac
+from core.wave_manager import WaveManager
 from plants.hrachostrel import Hrachostrel
 from plants.kaktus import Kaktus
 from plants.studna import Studna
-from ui import Button
+from ui.ui import Button
 
 class PlantsVsVegansGame:
     def __init__(self, screen):
@@ -25,14 +29,15 @@ class PlantsVsVegansGame:
         self.game_over = False
         self.action_after_quit = "MENU"
         self.pause_start_cas = 0
-        self.hrac = Hrac(200)
+        self.game_speed = 1
+        self.hrac = Hrac(config.POCATECNI_PENIZE)
         self.wave_manager = WaveManager()
         self.vybrany_typ_kytky_data = None
         self.survived_time_ms = 0
         
         # Výběr a prodej existující kytky
         self.vybrana_polozena_kytka = None
-        self.sell_btn = Button(0, 0, 120, 35, "Prodat", self.font_ui, (200, 0, 0), (255, 50, 50))
+        self.sell_btn = Button(0, 0, 140, 35, "Prodat", self.font_ui, (200, 0, 0), (255, 50, 50))
 
         # Seznamy objektů 
         self.seznam_veganu = []
@@ -50,12 +55,13 @@ class PlantsVsVegansGame:
         self.main_menu_btn = Button(stred_x, 360, btn_w, btn_h, "Main Menu", self.font_ui, barva_zaklad, barva_hover)
 
         # Přípravná fáze
-        self.start_wave_btn = Button(config.SIRKA_OKNA - 280, config.VYSKA_MAPY + 20, 120, 60, "Start Wave", self.font_ui, (200, 0, 0), (255, 50, 50))
+        self.start_wave_btn = Button(config.SIRKA_OKNA - 320, config.VYSKA_MAPY + 20, 160, 60, "Start Wave", self.font_ui, (200, 0, 0), (255, 50, 50))
+        self.speed_btn = Button(config.SIRKA_OKNA - 320, config.VYSKA_MAPY + 20, 160, 60, "Rychlost: 1x", self.font_ui, (0, 0, 200), (50, 50, 255))
 
         # Tlačítka pro výběr kytek v UI
         self.plant_buttons = []
         for i, data in enumerate(config.SEZNAM_DOSTUPNYCH_KYTEK):
-            bx = 10 + (i * 142) # Lehce upravený rozestup
+            bx = 10 + (i * 185) # Větší rozestup, aby se vešla širší tlačítka
             by = config.VYSKA_MAPY + 10
             barva_zaklad = data["barva"]
             # Vypočítáme trochu světlejší barvu pro hover efekt
@@ -69,7 +75,7 @@ class PlantsVsVegansGame:
                 except (pygame.error, FileNotFoundError):
                     ikona = None
                     
-            btn = Button(bx, by, 140, 80, f"{data['nazev']}\n${data['cena']}", self.font_plants, barva_zaklad, barva_hover, (0, 0, 0), icon=ikona)
+            btn = Button(bx, by, 175, 80, f"{data['nazev']}\n${data['cena']}", self.font_plants, barva_zaklad, barva_hover, icon=ikona)
             self.plant_buttons.append({"btn": btn, "data": data})
 
         # Tlačítka pro Game Over
@@ -116,7 +122,7 @@ class PlantsVsVegansGame:
             elif self.main_menu_btn.is_clicked(pos):
                 self.running = False
             elif self.settings_btn.is_clicked(pos):
-                m = menu.Menu(in_game=True)
+                m = Menu(in_game=True)
                 m.settings_menu()
         else:
             # Kontrola kliknutí na tlačítko Start Wave (pokud vlna ještě nezačala)
@@ -127,6 +133,12 @@ class PlantsVsVegansGame:
                 # Resetujeme časovače u již položených kytek, aby nezačaly střílet/vydělávat s předstihem
                 for kytka in self.seznam_kytek:
                     kytka.posledni_akce_cas = nyni
+                return
+            
+            # Kontrola kliknutí na tlačítko pro zrychlení hry (pouze během vlny)
+            if self.wave_manager.wave_started and self.speed_btn.is_clicked(pos):
+                self.game_speed = 2 if self.game_speed == 1 else 1
+                self.speed_btn.text = f"Rychlost: {self.game_speed}x"
                 return
 
             # Kontrola kliknutí na plovoucí tlačítko Prodat
@@ -197,27 +209,27 @@ class PlantsVsVegansGame:
         # Přičteme čas (v milisekundách), který uběhl od posledního snímku
         self.survived_time_ms += self.clock.get_time()
             
-        self.wave_manager.update(self.seznam_veganu, self.hrac)
+        self.wave_manager.update(self.seznam_veganu, self.hrac, self.game_speed)
         
         for kytka in self.seznam_kytek:
             if not self.wave_manager.wave_started:
                 kytka.posledni_akce_cas = pygame.time.get_ticks()
                 
-            kytka.update(self.seznam_veganu, self.seznam_strel, self.hrac)
+            kytka.update(self.seznam_veganu, self.seznam_strel, self.hrac, self.game_speed)
 
         for strela in self.seznam_strel:
-            strela.update()
+            strela.update(self.game_speed)
             for vegan in self.seznam_veganu:
                 dist = strela.pozice.distance_to(vegan.pozice)
                 # Hitbox záleží na velikosti (poloměru) konkrétního vegana
-                if dist < vegan.polomer + 5: 
+                if dist < vegan.polomer + 5:
                     vegan.vezmi_poskozeni(strela.poskozeni)
                     strela.je_ziva = False
 
         self.seznam_strel = [strela for strela in self.seznam_strel if strela.je_ziva]
         self.seznam_veganu = [vegan for vegan in self.seznam_veganu if vegan.hp > 0]
         for vegan in self.seznam_veganu:
-            vegan.move()
+            vegan.move(self.game_speed)
             # Pokud vegan došel na poslední waypoint, je konec hry
             if vegan.aktualni_cil_index >= len(vegan.waypoints):
                 self.game_over = True
@@ -268,6 +280,8 @@ class PlantsVsVegansGame:
 
         if not self.wave_manager.wave_started:
             self.start_wave_btn.draw(self.screen)
+        else:
+            self.speed_btn.draw(self.screen)
 
     def draw_pause_menu(self):
         s = pygame.Surface((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.SRCALPHA)
@@ -322,7 +336,7 @@ class HerniAplikace:
                 
     def run(self):
         while True:
-            m = menu.Menu()
+            m = Menu()
             akce = m.main_menu()
             
             if akce == "PLAY":
