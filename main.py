@@ -16,6 +16,10 @@ from plants.studna import Studna
 from ui.ui import Button
 
 class PlantsVsVegansGame:
+    """
+    Tato třída představuje samotnou hru (jeden level). 
+    Uchovává si všechny informace o rozehrané hře (peníze, postavené kytky, nepřátele) a řídí její chod.
+    """
     def __init__(self, screen):
         self.screen = screen
         self.clock = pygame.time.Clock()
@@ -86,6 +90,7 @@ class PlantsVsVegansGame:
         self.mapa = HerniMapa()
 
     def handle_events(self):
+        """Zpracovává veškeré vstupy od uživatele v každém snímku (framu)."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -97,6 +102,7 @@ class PlantsVsVegansGame:
                 self.handle_click(pygame.mouse.get_pos())
 
     def toggle_pause(self):
+        """Zastaví nebo znovu spustí hru. Při spuštění dopočítá ztracený čas, aby se kytky nezbláznily."""
         if not self.paused:
             self.paused = True
             self.pause_start_cas = pygame.time.get_ticks()
@@ -108,6 +114,7 @@ class PlantsVsVegansGame:
                 kytka.posledni_akce_cas += posun
 
     def handle_click(self, pos):
+        """Základní 'mozek' interakce. Řeší, na co přesně hráč kliknul (podle toho, zda je Game Over, Pauza nebo se hraje)."""
         mouse_x, mouse_y = pos
         if self.game_over:
             if self.restart_btn.is_clicked(pos):
@@ -146,6 +153,7 @@ class PlantsVsVegansGame:
                 self.sell_plant()
                 return
 
+            # Pokud hráč klikl do horní části okna (herní plocha, nikoliv UI dole)
             if mouse_y < config.VYSKA_MAPY:
                 grid_x = mouse_x // config.VELIKOST_POLICKA
                 grid_y = mouse_y // config.VELIKOST_POLICKA
@@ -175,6 +183,10 @@ class PlantsVsVegansGame:
                 self.select_ui_item(mouse_x, mouse_y)
 
     def place_plant(self, gx, gy):
+        """
+        Položí novou kytku na souřadnice (gx, gy) v mřížce.
+        Předtím zkontroluje, jestli má hráč peníze, jestli je políčko volné a jestli je to políčko na trávě.
+        """
         if self.vybrany_typ_kytky_data and config.AKTUALNI_MAPA[gy][gx] == 0:
             if (gx, gy) not in self.seznam_obsazenych_policek:
                 if self.hrac.ma_dostatek(self.vybrany_typ_kytky_data["cena"]):
@@ -189,6 +201,7 @@ class PlantsVsVegansGame:
                     self.vybrany_typ_kytky_data = None
 
     def sell_plant(self):
+        """Smaže vybranou kytku z mapy a vrátí hráči polovinu její pořizovací ceny."""
         if self.vybrana_polozena_kytka:
             cena = self.vybrana_polozena_kytka.data["cena"] // 2
             self.hrac.pridej_penize(cena)
@@ -197,12 +210,17 @@ class PlantsVsVegansGame:
             self.vybrana_polozena_kytka = None
 
     def select_ui_item(self, mx, my):
+        """Zjistí, na kterou kytku hráč kliknul v dolním panelu (UI)."""
         for item in self.plant_buttons:
             if item["btn"].is_clicked((mx, my)):
                 self.vybrany_typ_kytky_data = item["data"]
                 self.vybrana_polozena_kytka = None # Zruší výběr postavené kytky
 
     def update(self):
+        """
+        Logika hry, která běží 60x za vteřinu.
+        Tady se řeší matematika, pohyb střel a nepřátel, hlídají se zásahy (kolize) a umírání.
+        """
         if self.paused or self.game_over:
             return
             
@@ -217,17 +235,20 @@ class PlantsVsVegansGame:
                 
             kytka.update(self.seznam_veganu, self.seznam_strel, self.hrac, self.game_speed)
 
+        # Kontrola, zda některá ze střel nezasáhla nějakého Vegana
         for strela in self.seznam_strel:
             strela.update(self.game_speed)
             for vegan in self.seznam_veganu:
                 dist = strela.pozice.distance_to(vegan.pozice)
-                # Hitbox záleží na velikosti (poloměru) konkrétního vegana
+                # Hitbox (kruh zásahu) záleží na velikosti (poloměru) konkrétního vegana
                 if dist < vegan.polomer + 5:
                     vegan.vezmi_poskozeni(strela.poskozeni)
                     strela.je_ziva = False
 
+        # Pročistíme seznamy (smažeme ty střely a vegany, kteří v tomto framu umřeli / narazili)
         self.seznam_strel = [strela for strela in self.seznam_strel if strela.je_ziva]
         self.seznam_veganu = [vegan for vegan in self.seznam_veganu if vegan.hp > 0]
+        
         for vegan in self.seznam_veganu:
             vegan.move(self.game_speed)
             # Pokud vegan došel na poslední waypoint, je konec hry
@@ -235,6 +256,10 @@ class PlantsVsVegansGame:
                 self.game_over = True
 
     def draw(self):
+        """
+        Vykreslí vše na obrazovku v přesném pořadí (odspodu nahoru). 
+        Co se vykreslí dřív, to je vespod (jako malování na plátno).
+        """
         # OOP: Vykreslování mapy a mřížky delegujeme na instanci mapy
         self.mapa.draw(self.screen, self.wave_manager.wave_started)
 
@@ -296,6 +321,7 @@ class PlantsVsVegansGame:
         self.screen.blit(lbl_pause, (config.SIRKA_OKNA//2 - lbl_pause.get_width()//2, 80))
 
     def draw_game_over(self):
+        """Ztmaví obrazovku červenou barvou, vypíše skóre a nabídne restartování nebo návrat do menu."""
         s = pygame.Surface((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.SRCALPHA)
         s.fill((50, 0, 0, 180)) # Červený poloprůhledný nádech
         self.screen.blit(s, (0, 0))
@@ -317,6 +343,10 @@ class PlantsVsVegansGame:
         self.go_main_menu_btn.draw(self.screen)
 
     def run(self):
+        """
+        Samotná 'smyčka', která volá vstupy, update a kreslení furt dokola podle přednastaveného FPS.
+        Vrátí informaci o tom, co má hra udělat, až se z ní hráč vrátí (MENU nebo RESTART).
+        """
         while self.running:
             self.handle_events()
             self.update()
@@ -325,7 +355,10 @@ class PlantsVsVegansGame:
         return self.action_after_quit
 
 class HerniAplikace:
-    """Hlavní třída aplikace, která funguje jako State Manager a řídí menu vs hru."""
+    """
+    Úplně nejvyšší třída celého programu, která funguje jako State Manager (přepínač stavů).
+    Stará se o plynulé překlikávání mezi hlavním menu a hrou, aniž by se program vypnul.
+    """
     def spust_hru(self):
         while True:
             screen = pygame.display.set_mode((config.SIRKA_OKNA, config.VYSKA_OKNA), pygame.FULLSCREEN | pygame.SCALED)
